@@ -1,0 +1,70 @@
+migration:
+  name: migration-job
+  secretName: migration-secret
+  configmapName: migration-configmap
+  image:
+    repository: sp357468/migration
+    tag: latest
+    pullPolicy: Always
+  job:
+    restartPolicy: Never
+app:
+  name: myapp
+  secretName: app-secret
+  configmapName: app-configmap
+  portNumber: 8000
+  ingressHost: arch.homework
+  image: sp357468/myapp:2.5
+  resources:
+    limits:
+      cpu: "1"
+      memory: "300Mi"
+    requests:
+      cpu: "0.1"
+      memory: "100Mi"
+db:
+  pgUsername: postgres
+  password: cXdlcg==
+  port: 5432
+postgresql:
+  primary:
+    podAnnotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/path: "/metrics/cluster"
+      prometheus.io/port: "9000"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  existingSecret: pg-secret
+  postgresqlDatabase: app
+  postgresqlUsername: app
+  persistence:
+    size: 1Gi
+    enabled: false
+  image:
+#    tag: 13.1.0
+    debug: true
+  fullnameOverride: myapp-pg
+  service:
+    type: NodePort
+    nodePort: 30533
+  volumePermissions:
+    enabled: true
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1000Mi"
+    requests:
+      cpu: "0.1"
+      memory: "100Mi"
+
+pgchecker:
+  image:
+    repository: docker.io/busybox
+    tag: 1.32
+    pullPolicy: IfNotPresent
+
+metrics:
+  serviceMonitor:
+    enabled: true
